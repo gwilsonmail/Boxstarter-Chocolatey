@@ -1,0 +1,230 @@
+# START http://boxstarter.org/package/url?*url to raw gist*
+#Run in Powershell or CMD administrator
+
+#####Still Needs to be done manually
+##Malwarebytes -> 0 Notice and , scan for root kit
+##MS office 365 install
+##Add printers
+##define libraries
+##define logins
+
+try {
+
+##########   Boxstarter options
+$Boxstarter.RebootOk=$true # Allow reboots?
+$Boxstarter.NoPassword=$false # Is this a machine with no login password?
+$Boxstarter.AutoLogin=$true # Save my password securely and auto-login after a reboot
+ 
+
+##########   set up Windows
+##########
+##########   Temporary while doing this script.  Will turn it back on at the end.
+Disable-UAC
+##########   We want to do MS updates.  But only, when we say to do it.
+Disable-MicrosoftUpdate
+
+##########   set up time server correctly
+net stop w32time
+w32tm /unregister
+w32tm /unregister
+w32tm /register
+reg add hklm\system\currentcontrolset\services\w32time\parameters\ /v NtpServer /t reg_sz /d time.nist.gov /f
+net start w32time
+w32tm /resync /rediscover
+
+##########   set Windows preferences
+### Make the powerbutton "Restart" by default
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v Start_PowerButtonAction /t REG_DWORD /d 4 /f
+
+## Show "run" in start menu
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v Start_ShowRun /t REG_DWORD /d 1 /f
+
+##Dont highlight new apps
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v Start_NotifyNewApps /t REG_DWORD /d 0 /f
+
+##Show network places
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v Start_ShowNetPlaces /t REG_DWORD /d 1 /f
+
+##Show recent documents
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v Start_ShowRecentDocs /t REG_DWORD /d 1 /f
+
+##########   change power settings
+#Write-BoxstarterMessage "Setting Windows power plan to $preferredPlan"
+#$guid = (Get-WmiObject -Class win32_powerplan -Namespace root\cimv2\power -Filter "ElementName='High performance'").InstanceID.tostring()
+#$regex = [regex]"{(.*?)}$"
+#$newpowerVal = $regex.Match($guid).groups[1].value
+#powercfg -S $newpowerVal
+ 
+Write-BoxstarterMessage "Setting Standby Timeout to Never"
+powercfg -change -standby-timeout-ac 0
+powercfg -change -standby-timeout-dc 0
+ 
+Write-BoxstarterMessage "Setting Monitor Timeout to 20 minutes"
+powercfg -change -monitor-timeout-ac 20
+powercfg -change -monitor-timeout-dc 20
+ 
+Write-BoxstarterMessage "Setting Disk Timeout to Never"
+powercfg -change -disk-timeout-ac 0
+powercfg -change -disk-timeout-dc 0
+ 
+Write-BoxstarterMessage "Turning off Windows Hibernation"
+powercfg -h off
+
+##########   Start Chocolatey install #1
+cinst PowerShell
+if (Test-PendingReboot) { Invoke-Reboot }
+
+Set-WindowsExplorerOptions -DisableShowHiddenFilesFoldersDrives -DisableShowProtectedOSFiles -DisableShowFileExtensions -EnableShowFullPathInTitleBar
+Set-TaskbarOptions -Size Large -UnLock
+
+if (Test-PendingReboot) { Invoke-Reboot }
+
+########################
+##########   Make an HBS folder
+##########   C:\HBS
+if (!(Test-Path -Path C:\HBS )) {
+mkdir C:\HBS
+}
+Write-BoxstarterMessage "Made HBS folder"
+
+##########   move all on the desktop in this user to the HBS folder
+##########   should alwasy be loged in as the admin or this will make a mess of users desktop
+#   move /Y %UserProfile%\Desktop\*.* C:\HBS\
+
+##########   Windows Update time
+##########   
+##########   Get the first round of windows critical updates
+Install-WindowsUpdate -getUpdatesFromMS -acceptEula -SuppressReboots
+if (Test-PendingReboot) { Invoke-Reboot }
+Write-BoxstarterMessage "First round of Windows Updates installed"
+
+##########   Install Anti-Virus
+Cinst microsoftsecurityessentials
+Write-BoxstarterMessage "Anti-Virus Apps installed"
+
+cinst DotNet3.5
+if (Test-PendingReboot) { Invoke-Reboot }
+cinst DotNet4.0
+if (Test-PendingReboot) { Invoke-Reboot }
+cinst DotNet4.5.1
+if (Test-PendingReboot) { Invoke-Reboot }
+
+##########   Install Browsers
+Cinst adblockpluschrome
+cinst GoogleChrome
+cinst FireFox
+if (Test-PendingReboot) { Invoke-Reboot }
+Write-BoxstarterMessage "Browser Apps installed"
+
+##########   Install Remote Support 
+cinst chocolateygui
+Cinst boxstarter
+cinst 7zip.install
+cinst teamviewer
+if (Test-PendingReboot) { Invoke-Reboot }
+Write-BoxstarterMessage "Remote Support Apps installed"
+
+##########   Install Browser Support
+cinst flashplayeractivex
+cinst jre8
+Cinst adobereader
+Cinst adobeair
+Cinst adobeshockwaveplayer
+Cinst webexFF
+Cinst gotomeeting
+if (Test-PendingReboot) { Invoke-Reboot }
+Write-BoxstarterMessage "Browser Support Apps installed"
+
+##########   Install Printers
+cinst cutepdf
+if (Test-PendingReboot) { Invoke-Reboot }
+Write-BoxstarterMessage "Printer Apps installed"
+
+##########   Install Cloud Storage
+cinst dropbox
+if (Test-PendingReboot) { Invoke-Reboot }
+Write-BoxstarterMessage "Cloud Storage Apps installed"
+
+##########   Install Communication
+Cinst skype
+if (Test-PendingReboot) { Invoke-Reboot }
+Write-BoxstarterMessage "Communication Apps installed"
+
+##########   Install Media
+Cinst itunes
+if (Test-PendingReboot) { Invoke-Reboot }
+Write-BoxstarterMessage "Media Apps installed"
+
+##########   Install Classic Shell
+
+if (Test-PendingReboot) { Invoke-Reboot }
+Write-BoxstarterMessage "Classic Shell Apps installed"
+
+##########   Install Windows updates and keep getting them
+Update-ExecutionPolicy Unrestricted
+Install-WindowsUpdate -acceptEula
+Enable-MicrosoftUpdate
+
+##########   Schedule updates to applications with chocolatey
+schtasks.exe /create /s "localhost" /ru "System" /tn "Update Chocolatey packages" /tr "%ChocolateyInstall%\bin\cup all" /sc DAILY /st 06:00 /F
+Write-BoxstarterMessage "Set update schedule for apps"
+if (Test-PendingReboot) { Invoke-Reboot }
+
+
+Write-BoxstarterMessage "about to do DNS"
+####### OPEN DNS ####### and Norton 1  to be added 199.85.127.10
+
+netsh interface ip set dns "Local Area Connection" static 208.67.222.222
+netsh interface ip add dns name="Local Area Connection" addr=208.67.220.220
+netsh interface ip set dns "Connectify" static 208.67.222.222
+netsh interface ip add dns name="Connectify" addr=208.67.220.220
+netsh interface ip set dns "Wireless Network Connection" static 208.67.222.222
+netsh interface ip add dns name="Wireless Network Connection" addr=208.67.220.220
+
+Write-BoxstarterMessage "did DNS"
+
+##########   Change IE to start with google ###
+REG ADD "HKCU\Software\Microsoft\Internet Explorer\Main" /V "Start Page" /D "http://www.google.com/" /F
+
+
+Write-BoxstarterMessage "Starting user info collection"
+
+##########   Get all user info
+Write-BoxstarterMessage "about do choco list"
+choco list -localonly >C:\HBS\myinfo.txt
+
+Write-BoxstarterMessage "about do do whoami"
+whoami /all /fo csv >C:\HBS\myinfo.csv
+
+Write-BoxstarterMessage "about do do getmac"
+getmac >>C:\HBS\myinfo.csv
+
+Write-BoxstarterMessage "about do do ipconfig"
+ipconfig /all >>C:\HBS\myinfo.csv
+
+Write-BoxstarterMessage "about do do wmic"
+wmic csproduct get vendor,name,identifyingnumber >>C:\HBS\myinfo.csv
+
+Write-BoxstarterMessage "did user info into 2 files myinfo .csv and .txt"
+
+##########   set up Windows for normal
+##########
+Enable-MicrosoftUpdate
+
+##########   Turn UAC Back on
+Enable-UAC
+
+##########   Clean up Boxstarter autologin
+##########   Note: keep this last in the script
+
+$winLogonKey="HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
+Remove-ItemProperty -Path $winLogonKey -Name "DefaultUserName" -ErrorAction SilentlyContinue
+Remove-ItemProperty -Path $winLogonKey -Name "DefaultDomainName" -ErrorAction SilentlyContinue
+Remove-ItemProperty -Path $winLogonKey -Name "DefaultPassword" -ErrorAction SilentlyContinue
+Remove-ItemProperty -Path $winLogonKey -Name "AutoAdminLogon" -ErrorAction SilentlyContinue
+
+
+} catch {
+  Write-ChocolateyFailure 'HBSinstall' $($_.Exception.Message)
+  throw
+}
