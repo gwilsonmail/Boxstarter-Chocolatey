@@ -1,8 +1,8 @@
-# START http://boxstarter.org/package/url?*url to raw gist*
-#Run in Powershell or CMD administrator
+##########   START http://boxstarter.org/package/url?*url to raw gist*
+##########   Run in Powershell or CMD administrator
+##########   START http://boxstarter.org/package/url?https://raw.githubusercontent.com/gwilsonmail/Boxstarter-Chocolatey/master/desktop-non-profit
 
-#####Still Needs to be done manually
-##Malwarebytes -> 0 Notice and , scan for root kit
+##########   The following needs to be done manually
 ##MS office 365 install
 ##Add printers
 ##define libraries
