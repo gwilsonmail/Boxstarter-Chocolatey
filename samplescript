@@ -1,0 +1,16 @@
+## to run from CMD, IE or FF with
+## START http://boxstarter.org/package/nr/url? followed by the raw URL of this scripted
+##
+
+Set-ExplorerOptions -showHidenFilesFoldersDrives -showProtectedOSFiles -showFileExtensions
+Enable-RemoteDesktop
+
+cinst fiddler4
+cinst git-credential-winstore
+cinst console-devel
+cinst sublimetext2
+cinst poshgit
+cinst dotpeek
+
+cinst Microsoft-Hyper-V-All -source windowsFeatures
+cinst IIS-WebServerRole -source windowsfeatures
