@@ -1,5 +1,6 @@
-## to run from CMD, IE or FF with
-## START http://boxstarter.org/package/nr/url? followed by the raw URL of this scripted
+## To run this script enter from CMD line. See notes if IE is not the default browser.
+##
+## START http://boxstarter.org/package/nr/url? followed by the URL of this github script displayed in RAW mode.
 ## START http://boxstarter.org/package/nr/url?https://raw.githubusercontent.com/gwilsonmail/Boxstarter-Chocolatey/master/samplescript
 
 Set-ExplorerOptions -showHidenFilesFoldersDrives -showProtectedOSFiles -showFileExtensions
